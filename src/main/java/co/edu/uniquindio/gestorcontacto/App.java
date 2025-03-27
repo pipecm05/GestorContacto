@@ -6,27 +6,20 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-
-public class NotasApp extends Application {
-
-
+public class App extends Application {
     @Override
     public void start(Stage stage) throws Exception {
-
-
-        FXMLLoader loader = new FXMLLoader(NotasApp.class.getResource("inicio.fxml"));
-        Parent parent = loader.load();
-
-
-        Scene scene = new Scene(parent);
+        FXMLLoader loader = new FXMLLoader(
+                getClass().getResource("/co/edu/uniquindio/gestorcontacto/Contacto.fxml")
+        );
+        Parent root = loader.load();
+        Scene scene = new Scene(root);
         stage.setScene(scene);
-        stage.setTitle("Mis Notas");
+        stage.setTitle("Gestor de Contactos");
         stage.show();
     }
 
-
     public static void main(String[] args) {
-        launch(NotasApp.class, args);
+        launch(args);
     }
 }
-
