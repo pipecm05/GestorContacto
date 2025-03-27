@@ -2,11 +2,10 @@ package co.edu.uniquindio.gestorcontacto.modelo;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class GestionContacto {
-    private List<Contacto> contactos = new ArrayList<>();
+    private final List<Contacto> contactos = new ArrayList<>();
 
     public void agregarContacto(Contacto contacto) throws Exception {
         validarContacto(contacto);
@@ -18,12 +17,12 @@ public class GestionContacto {
         contactos.add(contacto);
     }
 
-    public void actualizarContacto(Contacto contactoActual, Contacto contactoNuevo) throws Exception {
-        validarContacto(contactoNuevo);
+    public void actualizarContacto(Contacto viejo, Contacto nuevo) throws Exception {
+        validarContacto(nuevo);
 
-        int index = contactos.indexOf(contactoActual);
+        int index = contactos.indexOf(viejo);
         if (index != -1) {
-            contactos.set(index, contactoNuevo);
+            contactos.set(index, nuevo);
         }
     }
 
@@ -35,6 +34,13 @@ public class GestionContacto {
         return contactos.stream()
                 .filter(c -> c.getNombre().toLowerCase().contains(nombre.toLowerCase()))
                 .collect(Collectors.toList());
+    }
+
+    public Contacto buscarPorNombreExacto(String nombre) {
+        return contactos.stream()
+                .filter(c -> c.getNombre().equalsIgnoreCase(nombre))
+                .findFirst()
+                .orElse(null);
     }
 
     public List<Contacto> buscarPorTelefono(String telefono) {
@@ -58,28 +64,20 @@ public class GestionContacto {
             throw new Exception("El nombre es obligatorio");
         }
 
-        if (contacto.getApellido() == null || contacto.getApellido().trim().isEmpty()) {
-            throw new Exception("El apellido es obligatorio");
-        }
-
         if (contacto.getTelefono() == null || contacto.getTelefono().trim().isEmpty()) {
             throw new Exception("El teléfono es obligatorio");
         }
 
-        if (!Pattern.matches("^[+]?[0-9]{10,13}$", contacto.getTelefono())) {
-            throw new Exception("El teléfono no tiene un formato válido");
+        if (!contacto.getTelefono().matches("^[+]?[0-9]{10,13}$")) {
+            throw new Exception("El teléfono debe tener entre 10 y 13 dígitos");
         }
 
         if (contacto.getCorreo() == null || contacto.getCorreo().trim().isEmpty()) {
             throw new Exception("El correo es obligatorio");
         }
 
-        if (!Pattern.matches("^[A-Za-z0-9+_.-]+@(.+)$", contacto.getCorreo())) {
-            throw new Exception("El correo no tiene un formato válido");
-        }
-
-        if (contacto.getCumpleanos() == null) {
-            throw new Exception("La fecha de cumpleaños es obligatoria");
+        if (!contacto.getCorreo().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+            throw new Exception("Formato de correo inválido");
         }
     }
 }
