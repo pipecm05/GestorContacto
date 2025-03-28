@@ -11,24 +11,36 @@
 
     <top>
         <GridPane hgap="10" vgap="10" style="-fx-padding: 20;">
+            <columnConstraints>
+                <ColumnConstraints prefWidth="100"/>
+                <ColumnConstraints prefWidth="200"/>
+                <ColumnConstraints prefWidth="150"/>
+            </columnConstraints>
+
             <Label text="Nombre:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-            <TextField fx:id="txtNombre" GridPane.rowIndex="0" GridPane.columnIndex="1" prefWidth="200"/>
+            <TextField fx:id="txtNombre" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
             <Label text="Apellido:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-            <TextField fx:id="txtApellido" GridPane.rowIndex="1" GridPane.columnIndex="1" prefWidth="200"/>
+            <TextField fx:id="txtApellido" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
 
             <Label text="Teléfono:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-            <TextField fx:id="txtTelefono" GridPane.rowIndex="2" GridPane.columnIndex="1" prefWidth="200"
+            <TextField fx:id="txtTelefono" GridPane.rowIndex="2" GridPane.columnIndex="1"
                        promptText="Ej: +573001234567"/>
 
             <Label text="Correo:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-            <TextField fx:id="txtCorreo" GridPane.rowIndex="3" GridPane.columnIndex="1" prefWidth="200"
+            <TextField fx:id="txtCorreo" GridPane.rowIndex="3" GridPane.columnIndex="1"
                        promptText="Ej: usuario@dominio.com"/>
 
             <Label text="Cumpleaños:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-            <DatePicker fx:id="dpCumpleanos" GridPane.rowIndex="4" GridPane.columnIndex="1" prefWidth="200"/>
+            <DatePicker fx:id="dpCumpleanos" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
 
-            <HBox spacing="10" GridPane.rowIndex="5" GridPane.columnIndex="1" alignment="CENTER">
+            <Label text="Foto:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+            <HBox spacing="10" GridPane.rowIndex="5" GridPane.columnIndex="1">
+                <ImageView fx:id="imgFoto" fitHeight="80" fitWidth="80" preserveRatio="true"/>
+                <Button fx:id="btnSeleccionarFoto" text="Seleccionar" onAction="#seleccionarFoto"/>
+            </HBox>
+
+            <HBox spacing="10" GridPane.rowIndex="6" GridPane.columnIndex="1" alignment="CENTER">
                 <Button text="Guardar" onAction="#agregarContacto" style="-fx-min-width: 80;"/>
                 <Button text="Editar" onAction="#editarContacto" style="-fx-min-width: 80;"/>
                 <Button text="Cancelar" onAction="#limpiarFormulario" style="-fx-min-width: 80;"/>
@@ -44,6 +56,7 @@
                 <TableColumn fx:id="colTelefono" text="Teléfono" prefWidth="120"/>
                 <TableColumn fx:id="colCorreo" text="Correo" prefWidth="200"/>
                 <TableColumn fx:id="colCumpleanos" text="Cumpleaños" prefWidth="120"/>
+                <TableColumn fx:id="colFoto" text="Foto" prefWidth="100"/>
             </columns>
         </TableView>
     </center>
@@ -54,7 +67,7 @@
             <ComboBox fx:id="cbFiltro" prefWidth="100"/>
             <TextField fx:id="txtBusqueda" promptText="Buscar..." prefWidth="200"/>
             <Button text="Buscar" onAction="#buscarContacto" style="-fx-min-width: 80;"/>
-            <Button text="Buscar por Nombre" onAction="#buscarPorNombreCompleto" style="-fx-min-width: 120;"/>
+            <Button text="Buscar Exacto" onAction="#buscarPorNombreCompleto" style="-fx-min-width: 100;"/>
         </HBox>
     </bottom>
 </BorderPane>

@@ -9,13 +9,18 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.stage.FileChooser;
 
+import java.io.File;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ContactosControlador implements Initializable {
 
@@ -25,7 +30,8 @@ public class ContactosControlador implements Initializable {
     @FXML private TableColumn<Contacto, String> colApellido;
     @FXML private TableColumn<Contacto, String> colTelefono;
     @FXML private TableColumn<Contacto, String> colCorreo;
-    @FXML private TableColumn<Contacto, String> colCumpleanos;
+    @FXML private TableColumn<Contacto, LocalDate> colCumpleanos;
+    @FXML private TableColumn<Contacto, Image> colFoto;
 
     // Componentes de búsqueda
     @FXML private ComboBox<String> cbFiltro;
@@ -37,9 +43,12 @@ public class ContactosControlador implements Initializable {
     @FXML private TextField txtTelefono;
     @FXML private TextField txtCorreo;
     @FXML private DatePicker dpCumpleanos;
+    @FXML private ImageView imgFoto;
+    @FXML private Button btnSeleccionarFoto;
 
     private final GestionContacto gestionContacto = new GestionContacto();
     private Contacto contactoSeleccionado;
+    private Image fotoSeleccionada;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -54,18 +63,81 @@ public class ContactosControlador implements Initializable {
         colTelefono.setCellValueFactory(new PropertyValueFactory<>("telefono"));
         colCorreo.setCellValueFactory(new PropertyValueFactory<>("correo"));
         colCumpleanos.setCellValueFactory(new PropertyValueFactory<>("cumpleanos"));
+        colFoto.setCellValueFactory(new PropertyValueFactory<>("foto"));
+
+        // Configurar celda de imagen
+        colFoto.setCellFactory(param -> new TableCell<>() {
+            private final ImageView imageView = new ImageView();
+            {
+                imageView.setFitHeight(50);
+                imageView.setFitWidth(50);
+                imageView.setPreserveRatio(true);
+            }
+
+            @Override
+            protected void updateItem(Image item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    imageView.setImage(item);
+                    setGraphic(imageView);
+                }
+            }
+        });
 
         tablaContactos.getSelectionModel().selectedItemProperty().addListener(
-                (obs, oldSelection, newSelection) -> contactoSeleccionado = newSelection);
+                (obs, oldSelection, newSelection) -> {
+                    contactoSeleccionado = newSelection;
+                    if (newSelection != null) {
+                        cargarDatosContactoSeleccionado();
+                    }
+                });
+    }
+
+    private void cargarDatosContactoSeleccionado() {
+        txtNombre.setText(contactoSeleccionado.getNombre());
+        txtApellido.setText(contactoSeleccionado.getApellido());
+        txtTelefono.setText(contactoSeleccionado.getTelefono());
+        txtCorreo.setText(contactoSeleccionado.getCorreo());
+        dpCumpleanos.setValue(contactoSeleccionado.getCumpleanos());
+        imgFoto.setImage(contactoSeleccionado.getFoto());
+        fotoSeleccionada = contactoSeleccionado.getFoto();
     }
 
     private void configurarBusqueda() {
-        cbFiltro.setItems(FXCollections.observableArrayList("Nombre", "Teléfono"));
-        cbFiltro.getSelectionModel().selectFirst();
+        // Inicializa el ComboBox con las opciones claras
+        ObservableList<String> opciones = FXCollections.observableArrayList(
+                "Nombre",
+                "Teléfono"
+        );
+        cbFiltro.setItems(opciones);
+        cbFiltro.getSelectionModel().selectFirst(); // Selecciona "Nombre" por defecto
+
+        // Listener para actualizar la búsqueda automáticamente al escribir
+        txtBusqueda.textProperty().addListener((observable, oldValue, newValue) -> {
+            buscarContacto(null); // Llama al método de búsqueda automáticamente
+        });
     }
 
     private void cargarDatosIniciales() {
         actualizarTabla();
+    }
+
+    @FXML
+    private void seleccionarFoto(ActionEvent event) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Seleccionar imagen del contacto");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Imágenes", "*.png", "*.jpg", "*.jpeg", "*.gif"),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*")
+        );
+
+        File file = fileChooser.showOpenDialog(btnSeleccionarFoto.getScene().getWindow());
+        if (file != null) {
+            fotoSeleccionada = new Image(file.toURI().toString());
+            imgFoto.setImage(fotoSeleccionada);
+        }
     }
 
     @FXML
@@ -129,25 +201,35 @@ public class ContactosControlador implements Initializable {
 
     @FXML
     private void buscarContacto(ActionEvent event) {
-        String criterio = cbFiltro.getValue();
-        String busqueda = txtBusqueda.getText().trim();
+        try {
+            String criterio = cbFiltro.getValue();
+            String busqueda = txtBusqueda.getText().trim().toLowerCase();
 
-        if (busqueda.isEmpty()) {
-            mostrarAlerta("Advertencia", "Ingrese un término de búsqueda", Alert.AlertType.WARNING);
-            return;
-        }
+            if (busqueda.isEmpty()) {
+                actualizarTabla(); // Mostrar todos si no hay texto
+                return;
+            }
 
-        List<Contacto> resultados;
-        if ("Nombre".equals(criterio)) {
-            resultados = gestionContacto.buscarPorNombre(busqueda);
-        } else {
-            resultados = gestionContacto.buscarPorTelefono(busqueda);
-        }
+            List<Contacto> resultados;
+            switch (criterio) {
+                case "Nombre":
+                    resultados = gestionContacto.listarContactos().stream()
+                            .filter(c -> c.getNombre().toLowerCase().contains(busqueda))
+                            .collect(Collectors.toList());
+                    break;
+                case "Teléfono":
+                    resultados = gestionContacto.listarContactos().stream()
+                            .filter(c -> c.getTelefono().contains(busqueda))
+                            .collect(Collectors.toList());
+                    break;
+                default:
+                    resultados = gestionContacto.listarContactos();
+            }
 
-        if (resultados.isEmpty()) {
-            mostrarAlerta("Información", "No se encontraron contactos", Alert.AlertType.INFORMATION);
-        } else {
             tablaContactos.setItems(FXCollections.observableArrayList(resultados));
+
+        } catch (Exception e) {
+            mostrarAlerta("Error", "Ocurrió un error al buscar: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
@@ -166,6 +248,14 @@ public class ContactosControlador implements Initializable {
             Alert alerta = new Alert(Alert.AlertType.INFORMATION);
             alerta.setTitle("Información del contacto");
             alerta.setHeaderText("Datos completos de " + contacto.getNombre());
+
+            // Crear ImageView para mostrar la foto en el diálogo
+            ImageView imageView = new ImageView(contacto.getFoto());
+            imageView.setFitHeight(100);
+            imageView.setFitWidth(100);
+            imageView.setPreserveRatio(true);
+
+            alerta.setGraphic(imageView);
             alerta.setContentText(
                     "Nombre: " + contacto.getNombre() + "\n" +
                             "Apellido: " + contacto.getApellido() + "\n" +
@@ -186,6 +276,8 @@ public class ContactosControlador implements Initializable {
         txtTelefono.clear();
         txtCorreo.clear();
         dpCumpleanos.setValue(null);
+        imgFoto.setImage(null);
+        fotoSeleccionada = null;
         contactoSeleccionado = null;
     }
 
@@ -195,7 +287,8 @@ public class ContactosControlador implements Initializable {
         contacto.setApellido(txtApellido.getText());
         contacto.setTelefono(txtTelefono.getText());
         contacto.setCorreo(txtCorreo.getText());
-        contacto.setCumpleanos(LocalDate.parse(dpCumpleanos.getValue() != null ? dpCumpleanos.getValue().toString() : ""));
+        contacto.setCumpleanos(dpCumpleanos.getValue());
+        contacto.setFoto(fotoSeleccionada);
         return contacto;
     }
 
